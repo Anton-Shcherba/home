@@ -15,12 +15,19 @@ A full-stack application with React frontend, FastAPI backend, and PostgreSQL da
 
 - Docker and Docker Compose installed
 
-### Running the Application
+### Setup
 
-#### Windows (PowerShell)
-```powershell
-.\docker-up.ps1
-```
+1. Clone the repository
+2. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+3. Start the application:
+   ```bash
+   docker-compose up --build
+   ```
+
+### Alternative Start Methods
 
 #### Windows (Batch)
 ```batch
@@ -36,7 +43,7 @@ The application will be available at:
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
-- Health Check: http://localhost:8000/health
+- Health Check: http://localhost:8000/api/health
 - Database: localhost:5432 (user: user, pass: password)
 
 ### Development
@@ -62,16 +69,16 @@ npm run dev
 ├── backend/          # FastAPI backend
 ├── frontend/         # React frontend
 ├── docker-compose.yml
+├── .env.example      # Environment variables template
 ├── .env              # Environment variables (not committed)
 ├── .gitignore
 ├── makefile          # Make commands for Linux/Mac
-├── start.bat         # Batch script for Windows
-└── docker-up.ps1     # PowerShell script for Windows
+└── start.bat         # Batch script for Windows
 ```
 
 ## Environment Variables
 
-Copy `.env` from example and configure:
+Copy `.env.example` to `.env` and configure as needed:
 - Database settings
 - Ports
 - Secrets
