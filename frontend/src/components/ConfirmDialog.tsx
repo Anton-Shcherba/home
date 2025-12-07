@@ -1,5 +1,4 @@
 import React from 'react';
-import './ConfirmDialog.scss';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
