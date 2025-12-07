@@ -33,7 +33,7 @@ make up
 ```
 
 The application will be available at:
-- Frontend: http://localhost
+- Frontend: http://localhost:5173
 - Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 - Health Check: http://localhost:8000/health

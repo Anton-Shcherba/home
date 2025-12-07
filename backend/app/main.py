@@ -26,6 +26,6 @@ async def root():
     return {"message": "FullStack Backend API"}
 
 
-@app.get("/health")
+@app.get("/api/health")
 async def health():
     return {"status": "healthy"}

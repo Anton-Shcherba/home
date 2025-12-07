@@ -1,21 +1,26 @@
 import { useState, useEffect, useRef } from 'react'
-import { itemsApi } from './services/api'
+import { useItems, useCreateItem, useUpdateItem, useDeleteItem } from './hooks/useItems'
 import type { Item } from './types'
 import ConfirmDialog from './components/ConfirmDialog'
 import './App.scss'
 
 function App() {
-  const [items, setItems] = useState<Item[]>([])
-  const [loading, setLoading] = useState(true)
   const [newTitle, setNewTitle] = useState('')
   const [newDescription, setNewDescription] = useState('')
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [deletingId, setDeletingId] = useState<number | null>(null)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
 
   const messageTimeoutRef = useRef<number | null>(null)
+
+  // React Query hooks
+  const { data: items = [], isLoading: loading } = useItems()
+  const createItemMutation = useCreateItem()
+  const updateItemMutation = useUpdateItem()
+  const deleteItemMutation = useDeleteItem()
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text })
@@ -29,40 +34,25 @@ function App() {
     }, 5000)
   }
 
-  const fetchItems = async () => {
-    try {
-      const response = await itemsApi.getAll()
-      setItems(response.data)
-    } catch (error) {
-      console.error('Error fetching items:', error)
-      showMessage('error', 'Ошибка загрузки данных')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const createItem = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-  const createItem = async () => {
     if (!newTitle.trim()) {
       showMessage('error', 'Введите название элемента')
       return
     }
 
-    setIsSubmitting(true)
-
     try {
-      await itemsApi.create({
+      await createItemMutation.mutateAsync({
         title: newTitle,
         description: newDescription
       })
       setNewTitle('')
       setNewDescription('')
       showMessage('success', 'Элемент успешно создан!')
-      fetchItems()
     } catch (error) {
       console.error('Error creating item:', error)
       showMessage('error', 'Ошибка при создании элемента')
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -74,25 +64,59 @@ function App() {
   const confirmDelete = async () => {
     if (!itemToDelete) return
 
-    setDeletingId(itemToDelete.id)
     setShowConfirmDialog(false)
 
     try {
-      await itemsApi.delete(itemToDelete.id)
+      await deleteItemMutation.mutateAsync(itemToDelete.id)
       showMessage('success', `Элемент "${itemToDelete.title}" успешно удалён!`)
-      fetchItems()
+      setItemToDelete(null)
     } catch (error) {
       console.error('Error deleting item:', error)
       showMessage('error', 'Ошибка при удалении элемента')
-    } finally {
-      setDeletingId(null)
-      setItemToDelete(null)
     }
   }
 
   const cancelDelete = () => {
     setShowConfirmDialog(false)
     setItemToDelete(null)
+  }
+
+  const startEditing = (item: Item) => {
+    setEditingId(item.id)
+    setEditTitle(item.title)
+    setEditDescription(item.description || '')
+  }
+
+  const saveEdit = async () => {
+    if (!editTitle.trim()) {
+      showMessage('error', 'Введите название элемента')
+      return
+    }
+
+    if (!editingId) return
+
+    try {
+      await updateItemMutation.mutateAsync({
+        id: editingId,
+        data: {
+          title: editTitle,
+          description: editDescription
+        }
+      })
+      showMessage('success', 'Элемент успешно обновлён!')
+      setEditingId(null)
+      setEditTitle('')
+      setEditDescription('')
+    } catch (error) {
+      console.error('Error updating item:', error)
+      showMessage('error', 'Ошибка при обновлении элемента')
+    }
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditTitle('')
+    setEditDescription('')
   }
 
   const testHealth = async () => {
@@ -108,19 +132,12 @@ function App() {
   }
 
   useEffect(() => {
-    fetchItems()
-
     return () => {
       if (messageTimeoutRef.current) {
         window.clearTimeout(messageTimeoutRef.current)
       }
     }
   }, [])
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    createItem()
-  }
 
   return (
     <>
@@ -152,7 +169,7 @@ function App() {
 
         <div className="form">
           <h2>Добавить новый элемент</h2>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={createItem}>
             <div className="form-group">
               <label htmlFor="title">Название элемента</label>
               <input
@@ -161,7 +178,7 @@ function App() {
                 placeholder="Введите название элемента"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                disabled={isSubmitting}
+                disabled={createItemMutation.isPending}
               />
             </div>
 
@@ -173,15 +190,15 @@ function App() {
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
                 rows={3}
-                disabled={isSubmitting}
+                disabled={createItemMutation.isPending}
               />
             </div>
 
             <button
               type="submit"
-              disabled={isSubmitting || !newTitle.trim()}
+              disabled={createItemMutation.isPending || !newTitle.trim()}
             >
-              {isSubmitting ? 'Создание...' : 'Создать элемент'}
+              {createItemMutation.isPending ? 'Создание...' : 'Создать элемент'}
             </button>
           </form>
         </div>
@@ -198,22 +215,70 @@ function App() {
             <ul>
               {items.map(item => (
                 <li key={item.id}>
-                  <div className="item-header">
-                    <h3>{item.title}</h3>
-                    <button
-                      className="delete-btn"
-                      onClick={() => handleDeleteClick(item)}
-                      disabled={deletingId === item.id}
-                      title="Удалить элемент"
-                    >
-                      {deletingId === item.id ? '⏳' : '🗑️'}
-                    </button>
-                  </div>
-                  {item.description && <p>{item.description}</p>}
-                  {item.created_at && (
-                    <small>
-                      Создано: {new Date(item.created_at).toLocaleString('ru-RU')}
-                    </small>
+                  {editingId === item.id ? (
+                    <div className="edit-form">
+                      <div className="form-group">
+                        <label>Название элемента</label>
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          disabled={updateItemMutation.isPending}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Описание</label>
+                        <textarea
+                          value={editDescription}
+                          onChange={(e) => setEditDescription(e.target.value)}
+                          rows={2}
+                          disabled={updateItemMutation.isPending}
+                        />
+                      </div>
+                      <div className="edit-buttons">
+                        <button
+                          onClick={saveEdit}
+                          disabled={updateItemMutation.isPending || !editTitle.trim()}
+                        >
+                          {updateItemMutation.isPending ? 'Сохранение...' : '💾 Сохранить'}
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          disabled={updateItemMutation.isPending}
+                        >
+                          ❌ Отмена
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="item-header">
+                        <h3>{item.title}</h3>
+                        <div className="item-actions">
+                          <button
+                            className="edit-btn"
+                            onClick={() => startEditing(item)}
+                            title="Редактировать элемент"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDeleteClick(item)}
+                            disabled={deleteItemMutation.isPending && itemToDelete?.id === item.id}
+                            title="Удалить элемент"
+                          >
+                            {deleteItemMutation.isPending && itemToDelete?.id === item.id ? '⏳' : '🗑️'}
+                          </button>
+                        </div>
+                      </div>
+                      {item.description && <p>{item.description}</p>}
+                      {item.created_at && (
+                        <small>
+                          Создано: {new Date(item.created_at).toLocaleString('ru-RU')}
+                        </small>
+                      )}
+                    </>
                   )}
                 </li>
               ))}
@@ -256,7 +321,7 @@ function App() {
             </li>
             <li>
               <strong>🎯 Features</strong>
-              CRUD операции + Валидация + Гибкая архитектура
+              Полные CRUD операции + Валидация + Гибкая архитектура
             </li>
           </ul>
         </div>

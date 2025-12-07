@@ -260,3 +260,10 @@ secrets/
 *.crt
 *.p12
 *.pfx
+
+# Project specific
+backend/.env
+frontend/.env
+backend/app/__pycache__/
+*.log
+postgres_data/

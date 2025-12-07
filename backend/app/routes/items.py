@@ -30,6 +30,23 @@ def read_item(item_id: int, db: Session = Depends(get_db)):
     return item
 
 
+@router.put("/{item_id}", response_model=schemas.Item)
+def update_item(item_id: int, item_update: schemas.ItemUpdate, db: Session = Depends(get_db)):
+    # Ищем элемент в базе данных
+    db_item = db.query(models.Item).filter(models.Item.id == item_id).first()
+
+    if db_item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    # Обновляем поля
+    for field, value in item_update.dict(exclude_unset=True).items():
+        setattr(db_item, field, value)
+
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+
 @router.delete("/{item_id}")
 def delete_item(item_id: int, db: Session = Depends(get_db)):
     # Ищем элемент в базе данных

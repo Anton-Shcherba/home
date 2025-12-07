@@ -299,17 +299,54 @@ body {
       margin-bottom: 10px;
     }
 
+    .item-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      margin-left: 10px;
+    }
+
+    .edit-btn,
     .delete-btn {
-      background: rgba(239, 68, 68, 0.1);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.2);
+      border: none;
       border-radius: 6px;
       padding: 6px 10px;
       cursor: pointer;
       font-size: 0.9rem;
       transition: all 0.2s ease;
       flex-shrink: 0;
-      margin-left: 10px;
+
+      &:focus {
+        outline: 2px solid rgba(52, 152, 219, 0.3);
+        outline-offset: 1px;
+      }
+    }
+
+    .edit-btn {
+      background: rgba(52, 152, 219, 0.1);
+      color: #3498db;
+      border: 1px solid rgba(52, 152, 219, 0.2);
+
+      &:hover:not(:disabled) {
+        background: rgba(52, 152, 219, 0.2);
+        border-color: rgba(52, 152, 219, 0.3);
+        transform: scale(1.05);
+      }
+
+      &:active:not(:disabled) {
+        transform: scale(0.95);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+
+    .delete-btn {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
 
       &:hover:not(:disabled) {
         background: rgba(239, 68, 68, 0.2);
@@ -324,11 +361,6 @@ body {
       &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
-      }
-
-      &:focus {
-        outline: 2px solid rgba(239, 68, 68, 0.3);
-        outline-offset: 1px;
       }
     }
 
@@ -386,6 +418,137 @@ body {
         content: '📅';
         margin-right: 6px;
         opacity: 0.7;
+      }
+    }
+
+    // Inline edit form
+    .edit-form {
+      background: linear-gradient(135deg, #e8f4fd 0%, #d1ecf1 100%);
+      border: 2px solid #bee3f8;
+      border-radius: 12px;
+      padding: 20px;
+      margin: -10px -10px 10px -10px;
+      animation: fadeIn 0.3s ease;
+
+      .form-group {
+        margin-bottom: 15px;
+
+        label {
+          display: block;
+          margin-bottom: 6px;
+          color: $text-dark;
+          font-weight: 600;
+          font-size: 0.9rem;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          &::before {
+            content: '✏️';
+            font-size: 0.8rem;
+          }
+        }
+
+        input,
+        textarea {
+          width: 100%;
+          padding: 12px 14px;
+          border: 2px solid #a0aec0;
+          border-radius: 8px;
+          background: $white;
+          color: $text-dark;
+          font-size: 1rem;
+          transition: all 0.2s ease;
+          font-family: inherit;
+
+          &:focus {
+            outline: none;
+            border-color: $primary-color;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+            background: #f8f9fa;
+          }
+
+          &::placeholder {
+            color: #a0aec0;
+          }
+        }
+
+        textarea {
+          resize: vertical;
+          min-height: 80px;
+        }
+      }
+
+      .edit-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 20px;
+
+        button {
+          padding: 10px 20px;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 0.95rem;
+          font-weight: 600;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          min-width: 100px;
+          justify-content: center;
+
+          &:focus {
+            outline: 2px solid rgba(52, 152, 219, 0.5);
+            outline-offset: 2px;
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+          }
+
+          &:first-child {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+
+            &:hover:not(:disabled) {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+            }
+
+            &:active:not(:disabled) {
+              transform: translateY(0);
+            }
+          }
+
+          &:last-child {
+            background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+            color: white;
+
+            &:hover:not(:disabled) {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 15px rgba(160, 174, 192, 0.3);
+            }
+
+            &:active:not(:disabled) {
+              transform: translateY(0);
+            }
+          }
+        }
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
       }
     }
   }
