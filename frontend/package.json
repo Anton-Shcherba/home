@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "docker:build": "npm run build",
+    "docker:dev": "vite --host"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.12",

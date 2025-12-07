@@ -1,29 +1,49 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:13-alpine
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DATABASE_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
   backend:
     build: ./backend
-    ports:
-      - "8000:8000"
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/appdb
+      DATABASE_URL: ${DATABASE_URL}
+    ports:
+      - "${BACKEND_PORT}:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./backend:/app
     networks:
       - app-network
+    restart: unless-stopped
 
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: appdb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+  frontend:
+    build: ./frontend
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - "${FRONTEND_PORT}:80"
+    depends_on:
+      - backend
     networks:
       - app-network
 

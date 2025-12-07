@@ -2,23 +2,23 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Устанавливаем системные зависимости
 RUN apt-get update && apt-get install -y \
     gcc \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-# Install poetry
-RUN pip install poetry
+# Копируем зависимости
+COPY pyproject.toml poetry.lock ./
 
-# Copy poetry files
-COPY pyproject.toml ./
+# Устанавливаем Poetry и зависимости
+RUN pip install poetry && \
+    poetry config virtualenvs.create false && \
+    poetry install --only main --no-root --no-interaction --no-ansi
 
-# Install dependencies
-RUN poetry config virtualenvs.create false && poetry install --no-root
-
-# Copy application code
+# Копируем код приложения
 COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["python", "start.py"]
